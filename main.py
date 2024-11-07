@@ -1,6 +1,8 @@
 # from openai import OpenAI
 import streamlit as st
 from langchain.chat_models import ChatOpenAI
+from langchain_community.document_loaders.csv_loader import CSVLoader
+# from langchain.llms import OpenAI
 from langchain.schema import (
     SystemMessage,
     HumanMessage,
@@ -9,19 +11,32 @@ from langchain.schema import (
 import random
 import time
 
-st.title("HR Chatbot")
-OPENAI_API_KEY='<key from https://platform.openai.com>'
+user = 'Joseph Peña'
+des_user = 'My name is ' + user
+
+st.title("Chatbot")
+OPENAI_API_KEY=''
 
 chat = ChatOpenAI(
     openai_api_key=OPENAI_API_KEY,
     model='gpt-3.5-turbo'
 )
 
+# llm = OpenAI(temperature=0.7, openai_api_key=openai_api_key)
+loader = CSVLoader(file_path="./employee_data.csv")
+data = loader.load_and_split()
+
+
 messages = []
 source_knowledge = ''
 
 with open('hr_policy.txt', 'r') as file:
     source_knowledge = file.read().replace('\n', '')
+
+for m in data:
+    source_knowledge += '\n' + m.page_content
+
+source_knowledge += '\n' + des_user
 
 # Streamed response emulator
 def response_generator(query):
@@ -40,6 +55,8 @@ def response_generator(query):
     messages.append(prompt)
     res = chat(messages)
     messages.append(res)
+
+    # st.info(llm(input_text))
 
     response = res.content
     for word in response.split():
